@@ -10,10 +10,19 @@ class Task < ApplicationRecord
   validates :status, presence: true
 
   after_initialize :set_default_status, if: :new_record?
+  after_update :log_status_transition, if: :saved_change_to_status? # ruby magic
 
   private
 
   def set_default_status
     self.status ||= "pending"
+  end
+
+  def log_status_transition
+    task_transitions.create(
+      from_status: status_before_last_save,
+      to_status: status,
+      transitioned_at: Time.current
+    )
   end
 end
